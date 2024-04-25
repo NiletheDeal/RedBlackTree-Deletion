@@ -21,7 +21,7 @@ int main(){
   int value = -1;
   Node* tree = nullptr;
   while(looping == true) {
-    cout <<"ADD, REMOVE, SEARCH, PRINT, or QUIT?" << endl;
+    cout <<"ADD, SEARCH, PRINT, or QUIT?" << endl;
     cin.get(command, 10);
     cin.clear();
     cin.ignore(10000, '\n');
@@ -39,9 +39,12 @@ int main(){
 	    adding = false;
 	  }
 	  else {
-	    Node* temp = new Node();
-	    temp->setData(value);
-	    ADD(tree, temp, tree);
+	    Node* current = tree;
+	    Node* previous = NULL;
+	    ADD(tree, current, previous, value);
+	  }
+	  if(current != head) {
+	    BALANCE(head, current);
 	  }
 	}
 	cin.clear();
@@ -57,10 +60,13 @@ int main(){
 	ifstream numbers("numbers.txt");
 	int numdone = 0;
 	while(numbers >> value && numdone < inputNum) {//go through the file and add to BST and then go to the next int until it adds how many the user wanted
-	  Node* temp = new Node();
-	  temp->setData(value);
-	  ADD(tree, temp, tree);
+	  Node* current = head;
+	  Node* previous = NULL;
+	  ADD(tree, current, previous, value);
 	  numdone++;
+	  if(current != head) {
+	    BALANCE(head, current);
+	  }
 	}
       }
       else {
@@ -84,140 +90,11 @@ int main(){
     else if(strcmp(command, "PRINT") == 0) {//PRINT out tree
       print(tree, 0);
     }
-    else if(strcmp(command, "REMOVE") == 0) {//Delete from tree
-      cout << "Enter the numbe you are deleteing" << endl;
-      int deleteInteger;
-      cin >> deleteInteger;
-      cin.clear();
-      cin.ignore(10000, '\n');
-      tree = deleteInt(tree, deleteInteger);
-      cout << "Done deleteing" << endl;
-    }
     else if(strcmp(command, "QUIT") == 0) {//quits
       looping = false;
       cout << "Thanks for utilizing this code" << endl;
     }
   }
-}
-void ADD(Node*& head, Node*& current, Node*& previous, int value) { //Add function, manually add in a node
-    if (head == NULL) {
-        head = new Node();
-        current = head;
-        head->setData(value);
-        head->setColor(0); //Head is always black
-    }
-    else {
-        if (value < current->getData()) {
-            previous = current;
-            current = current->getLeft();
-            if (current == NULL) {
-                current = new Node();
-                current->setData(value);
-                previous->setLeft(current);
-                current->setParent(previous);
-                BALANCE(head, current);
-                return;
-            }
-            else {
-                ADD(head, current, previous, value);
-            }
-        }
-scp        else {
-            previous = current;
-            current = current->getRight();
-            if (current == NULL) {
-                current = new Node();
-                current->setData(value);
-                previous->setRight(current);
-                current->setParent(previous);
-                BALANCE(head, current);
-                return;
-            }
-            else {
-                ADD(head, current, previous, value);
-            }
-        }
-    }
-}
-void ADD(Node*& head, Node*& current, Node*& previous, int value) { //Add function, manually add in a node
-    if (head == NULL) {
-        head = new Node();
-        current = head;
-        head->setData(value);
-        head->setColor(0); //Head is always black
-    }
-    else {
-        if (value < current->getData()) {
-            previous = current;
-            current = current->getLeft();
-            if (current == NULL) {
-                current = new Node();
-                current->setData(value);
-                previous->setLeft(current);
-                current->setParent(previous);
-                BALANCE(head, current);
-                return;
-            }
-            else {
-                ADD(head, current, previous, value);
-            }
-        }
-scp        else {
-            previous = current;
-            current = current->getRight();
-            if (current == NULL) {
-                current = new Node();
-                current->setData(value);
-                previous->setRight(current);
-                current->setParent(previous);
-                BALANCE(head, current);
-                return;
-            }
-            else {
-                ADD(head, current, previous, value);
-            }
-        }
-    }
-}
-void ADD(Node*& head, Node*& current, Node*& previous, int value) { //Add function, manually add in a node
-    if (head == NULL) {
-        head = new Node();
-        current = head;
-        head->setData(value);
-        head->setColor(0); //Head is always black
-    }
-    else {
-        if (value < current->getData()) {
-            previous = current;
-            current = current->getLeft();
-            if (current == NULL) {
-                current = new Node();
-                current->setData(value);
-                previous->setLeft(current);
-                current->setParent(previous);
-                BALANCE(head, current);
-                return;
-            }
-            else {
-                ADD(head, current, previous, value);
-            }
-        }
-scp        else {
-            previous = current;
-            current = current->getRight();
-            if (current == NULL) {
-                current = new Node();
-                current->setData(value);
-                previous->setRight(current);
-                current->setParent(previous);
-                BALANCE(head, current);
-                return;
-            }
-            else {
-                ADD(head, current, previous, value);
-            }
-        }
-    }
 }
 void ADD(Node*& head, Node*& current, Node*& previous, int value) { //Add function, manually add in a node
     if (head == NULL) {
@@ -259,7 +136,67 @@ void ADD(Node*& head, Node*& current, Node*& previous, int value) { //Add functi
         }
     }
 }
-
+void BALANCE(Node*& head, Node*& current) { //Balance function, for Red-Black Tree properties
+    Node* parent = NULL;
+    Node* grandParent = NULL;
+    while ((current != head) && (current->getColor() != 0) && ((current->getParent())->getColor() == 1)) {
+        parent = current->getParent();
+        grandParent = parent->getParent();
+        //Case A: Parent = left child of grandparent
+        if (parent == grandParent->getLeft()) {
+            Node* uncle = grandParent->getRight();
+            //Case 1A: Uncle = red, only recolor
+            if (uncle != NULL && uncle->getColor() != 0) {
+                grandParent->setColor(1); //Red
+                parent->setColor(0); //Black
+                uncle->setColor(0); //Black
+                current = grandParent;
+            }
+            else {
+                //Case 2A: Current = right child of parent, rotate left
+                if (current == parent->getRight()) {
+                    rotateLeft(head, parent);
+                    current = parent;
+                    parent = current->getParent();
+                }
+                //Case 3A: Current = left child of parent, rotate right
+                rotateRight(head, grandParent);
+                //swap colors of parent and grandparent
+                int tempCol = parent->getColor();
+                parent->setColor(grandParent->getColor());
+                grandParent->setColor(tempCol);
+                current = parent;
+            }
+        }
+        //Case B: Parent = right child of grandparent
+        else {
+            Node* uncle = grandParent->getLeft();
+            //Case 1B: Uncle = red, only recolor
+            if (uncle != NULL && uncle->getColor() != 0) {
+                grandParent->setColor(1); //Red
+                parent->setColor(0); //Black
+                uncle->setColor(0); //Black
+                current = grandParent;
+            }
+            else {
+                //Case 2B: Current = left child of parent, rotate right
+                if (current == parent->getLeft()) {
+                    rotateRight(head, parent);
+                    current = parent;
+                    parent = current->getParent();
+                }
+                //Case 3B: Current = right child of parent, rotate left
+                rotateLeft(head, grandParent);
+                //swap color of parent and grandparent
+                int tempCol = parent->getColor();
+                parent->setColor(grandParent->getColor());
+                grandParent->setColor(tempCol);
+                current = parent;
+            }
+        }
+    }
+    head->setColor(0); //head is black
+}
 
 void print(Node* tree, int count) {//print out tree
   if(tree->getRight() != nullptr) {//get to the right child
@@ -291,50 +228,4 @@ bool search(Node* tree, int s) {//searches for int s in search tree
     }
   }
   return false;
-}
-
-Node* deleteInt(Node* &root, int value) { //Courtesy of Nathan Zou: Delete function, deletes a node from the tree
-  Node* left = root->getLeft();
-  Node* right = root->getRight();
-  if (root == nullptr) {
-    return root;
-  }
-  else if (value < root->getData()) {
-    root->setLeft(deleteInt(left, value));
-  }
-  else if (value > root->getData()) {
-    root->setRight(deleteInt(right, value));
-  }
-  else { //If the root node is to be delete
-    if (root->getRight() == nullptr && root->getLeft() == nullptr) { //If there is no child nodes
-      root->~Node();
-      root = nullptr;
-      return root;
-    }
-    //If there is one child node that exists
-    else if (root->getLeft() == nullptr) { //The right child node exists
-      Node* temp = root;
-      root = root->getRight();
-      temp->~Node();
-      return root;
-    }
-    else if (root->getRight() == nullptr) { //The left child node exists
-      Node* temp = root;
-      root = root->getLeft();
-      temp->~Node();
-      return root;
-    }
-    else { //If there are two child nodes that exists
-      //Find the minimum on the right
-      Node* temp = root->getRight();
-      while (temp->getLeft() != nullptr) {
-	temp = temp->getLeft();
-      }
-      //Delete/replacement
-      root->setData(temp->getData());
-      Node* r = root->getRight();
-      root->setRight(deleteInt(r, temp->getData()));
-    }
-  }
-  return root;
 }
