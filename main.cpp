@@ -8,10 +8,38 @@
 #include <fstream>
 #include "node.h"
 
-void ADD(Node*& root, Node* newNode, Node* tree);
-void print(Node* tree, int count);
-bool search(Node* tree, int s);
-Node* deleteInt(Node* &root, int value);
+//Colors
+#define RESET "\033[0m"
+#define RED   "\033[31m"
+#define BLUE  "\033[34m" //Substitute for black
+
+using namespace std;
+
+struct Trunk { //Used for printing
+    Trunk* previous;
+    char* str;
+
+    Trunk(Trunk* previous, char* str) {
+        this->previous = previous;
+        this->str = str;
+    }
+};
+
+void showTrunks(Trunk* p) { //Uesd for printing
+    if (p == NULL)
+        return;
+
+    showTrunks(p->previous);
+
+    cout << p->str;
+}
+void ADD(Node*& head, Node*& current, Node*& previous, int value);
+void PRINT(Node* root, Trunk* previous, bool isLeft);
+
+void BALANCE(Node*& head, Node*& current);
+void rotateLeft(Node*& head, Node*& current);
+void rotateRight(Node*& head, Node*& current);
+
 int main(){
   cout << "Welcome to BST" << endl << endl;
   bool looping = true;
@@ -197,35 +225,47 @@ void BALANCE(Node*& head, Node*& current) { //Balance function, for Red-Black Tr
     }
     head->setColor(0); //head is black
 }
+void rotateLeft(Node*& head, Node*& current) { //Rotate Left
+    Node* rightPointer = current->getRight();
+    //begin rotation
+    current->setRight(rightPointer->getLeft());
+    if (current->getRight() != NULL) {
+        (current->getRight())->setParent(current);
+    }
+    rightPointer->setParent(current->getParent());
+    //if working with head
+    if (current->getParent() == NULL) {
+        head = rightPointer;
+    }
+    else if (current == (current->getParent())->getLeft()) {
+        (current->getParent())->setLeft(rightPointer);
+    }
+    else {
+        (current->getParent())->setRight(rightPointer);
+    }
+    rightPointer->setLeft(current);
+    current->setParent(rightPointer);
+}
 
-void print(Node* tree, int count) {//print out tree
-  if(tree->getRight() != nullptr) {//get to the right child
-    print(tree->getRight(), count+1);
-  }
-  for(int i = 0; i < count; i++) {//tabs over
-    cout << '\t';
-  }
-  cout << tree->getData() << endl;//print out value
-  //left side
-  if(tree->getLeft() != nullptr) {//get to the left child
-    print(tree->getLeft(), count+1);
-  }
+void rotateRight(Node*& head, Node*& current) { //Rotate Right
+    Node* leftPointer = current->getLeft();
+    //being rotation
+    current->setLeft(leftPointer->getRight());
+    if (current->getLeft() != NULL) {
+        (current->getLeft())->setParent(current);
+    }
+    leftPointer->setParent(current->getParent());
+    //if working with head
+    if (current->getParent() == NULL) {
+        head = leftPointer;
+    }
+    else if (current == (current->getParent())->getLeft()) {
+        (current->getParent())->setLeft(leftPointer);
+    }
+    else {
+        (current->getParent())->setRight(leftPointer);
+    }
+    leftPointer->setRight(current);
+    current->setParent(leftPointer);
 }
-bool search(Node* tree, int s) {//searches for int s in search tree
-  if(tree == nullptr) {//reach the end of the tree and havent found number than not in tree
-    return false;
-  }
-  else {
-    int treeD = tree->getData();
-    if(treeD == s) {//if equal found the number
-      return true;
-    }
-    else if(treeD > s) {//go down left child if smaller than parent
-      return search(tree->getLeft(), s);
-    }
-    else if(treeD < s) {//go down right child if larger than parent
-      return search(tree->getRight(), s);
-    }
-  }
-  return false;
-}
+
