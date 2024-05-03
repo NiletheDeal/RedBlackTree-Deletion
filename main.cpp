@@ -1,6 +1,9 @@
 //Neel Madala
-//3/22/2024
-//This code takes in list of integers from either the file or console and adds them to a binary search tree and the user is able to search for and delete user specified integers from the tree as well as print out the tree.
+//5/3/2024
+//This code creates a red black search tree which automatically balances itself in order to optimize search time where any leaf of the tree can only be one additional level deeper than every other leaf. If not it balances itself with rotation to make it so
+
+//Assistance from Nathan Zou, Lucas Johnson, Roger Li, Noam Yaffe
+
 
 #include <iostream>
 #include <cstring>
@@ -11,7 +14,7 @@
 //Colors
 #define RESET "\033[0m"
 #define RED   "\033[31m"
-#define BLUE  "\033[34m" //Substitute for black
+#define BLUE  "\033[34m"
 
 using namespace std;
 
@@ -25,7 +28,7 @@ struct Trunk { //Used for printing
     }
 };
 
-void showTrunks(Trunk* p) { //Uesd for printing
+void showTrunks(Trunk* p) {
     if (p == NULL)
         return;
 
@@ -33,6 +36,8 @@ void showTrunks(Trunk* p) { //Uesd for printing
 
     cout << p->str;
 }
+
+//Prototypes
 void ADD(Node*& head, Node*& current, Node*& previous, int value);
 void PRINT(Node* root, Trunk* previous, bool isLeft);
 
@@ -53,7 +58,7 @@ int main(){
     cin.get(command, 10);
     cin.clear();
     cin.ignore(10000, '\n');
-    if(strcmp(command, "ADD") == 0) {//Add to BST
+    if(strcmp(command, "ADD") == 0) {//Add to Red black tree
       adding = true;
       cout << "Are you adding by console or file? (c/f)" << endl;//console or file
       cin.get(command, 2);
@@ -71,9 +76,6 @@ int main(){
 	    Node* previous = NULL;
 	    ADD(tree, current, previous, value);
 	  }
-	  if(current != head) {
-	    BALANCE(head, current);
-	  }
 	}
 	cin.clear();
 	cin.ignore(10000, '\n');
@@ -88,35 +90,18 @@ int main(){
 	ifstream numbers("numbers.txt");
 	int numdone = 0;
 	while(numbers >> value && numdone < inputNum) {//go through the file and add to BST and then go to the next int until it adds how many the user wanted
-	  Node* current = head;
+	  Node* current = tree;
 	  Node* previous = NULL;
 	  ADD(tree, current, previous, value);
 	  numdone++;
-	  if(current != head) {
-	    BALANCE(head, current);
-	  }
 	}
       }
       else {
 	cout << "Invalid input" << endl;
       }
     }
-    else if(strcmp(command, "SEARCH") == 0) {//Search through BST for a integer
-      cout << "Enter the number you are searching " << endl;
-      int searchInt;
-      cin >> searchInt;
-      cin.clear();
-      cin.ignore(10000, '\n');
-      bool inTree = search(tree, searchInt);
-      if(inTree == true) {
-	cout << "That number is in the tree" << endl;
-      }
-      else {
-	cout << "That number isn't in the tree" << endl;
-      }
-    }
     else if(strcmp(command, "PRINT") == 0) {//PRINT out tree
-      print(tree, 0);
+      PRINT(tree, NULL, false);
     }
     else if(strcmp(command, "QUIT") == 0) {//quits
       looping = false;
@@ -268,4 +253,38 @@ void rotateRight(Node*& head, Node*& current) { //Rotate Right
     leftPointer->setRight(current);
     current->setParent(leftPointer);
 }
+//Adopted from Nathan Zou
+void PRINT(Node* root, Trunk* previous, bool isLeft) { //Print functions, prints out tree
+    if (root == NULL) {
+        return;
+    }
+    char* prevStr = (char*)("    ");
+    Trunk* trunk = new Trunk(previous, prevStr);
+    PRINT(root->getLeft(), trunk, true);
+    //Formatting tree
+    if (!previous) {
+        trunk->str = (char*)("---");
+    }
+    else if (isLeft) {
+        trunk->str = (char*)(".---");
+        prevStr = (char*)("   |");
+    }
+    else {
+        trunk->str = (char*)("'---");
+        previous->str = prevStr;
+    }
+    showTrunks(trunk);
+    if (root->getColor() == 0) { //if Black
+        cout << BLUE << root->getData() << RESET << endl;
+    }
+    else { //Red
+        cout << RED << root->getData() << RESET << endl;
+    }
+    if (previous) {
+        previous->str = prevStr;
+    }
+    trunk->str = (char*)("   |");
+    PRINT(root->getRight(), trunk, false);
+}
+
 
