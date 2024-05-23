@@ -100,6 +100,43 @@ int main(){
 	cout << "Invalid input" << endl;
       }
     }
+    else if(strcmp(command, "SEARCH") == 0) {//Search through Red-Black Tree for a integer
+      cout << "Enter the number you are searching " << endl;
+      int searchInt;
+      cin >> searchInt;
+      cin.clear();
+      cin.ignore(10000, '\n');
+      bool inTree = search(tree, searchInt);
+      if(inTree == true) {
+	cout << "That number is in the tree" << endl;
+      }
+      else {
+	cout << "That number isn't in the tree" << endl;
+      }
+    }
+    else if(strcmp(command, "REMOVE") == 0) {//Delete from tree
+      cout << "Enter the number you are deleteing" << endl;
+      int deleteInteger;
+      cin >> deleteInteger;
+      cin.clear();
+      cin.ignore(10000, '\n');
+      bool checkValue = search(tree, deleteInteger);
+      if(checkValue == 0) {
+	cout << "Value no found in tree, cannot delete." << endl << endl;
+      }
+      else {
+	Node* v = tree;
+	while(v->getData() != value) {//not the right node
+	  if(value < v->getData()) {//less than the current node
+	    v = v->getLeft();
+	  }
+	  else  if (value > v->getData()) {//greater than the current node
+	    v = v->getRight();
+	  }
+	}
+	DELETE(tree, v);
+	cout << "Done deleteing" << endl;
+    }
     else if(strcmp(command, "PRINT") == 0) {//PRINT out tree
       PRINT(tree, NULL, false);
     }
@@ -109,6 +146,26 @@ int main(){
     }
   }
 }
+
+bool search(Node* tree, int s) {//searches for int s in search tree
+  if(tree == nullptr) {//reach the end of the tree and havent found number than not in tree
+    return false;
+  }
+  else {
+    int treeD = tree->getData();
+    if(treeD == s) {//if equal found the number
+      return true;
+    }
+    else if(treeD > s) {//go down left child if smaller than parent
+      return search(tree->getLeft(), s);
+    }
+    else if(treeD < s) {//go down right child if larger than parent
+      return search(tree->getRight(), s);
+    }
+  }
+  return false;
+}
+
 void ADD(Node*& head, Node*& current, Node*& previous, int value) { //Add function, manually add in a node
     if (head == NULL) {
         head = new Node();
@@ -288,3 +345,4 @@ void PRINT(Node* root, Trunk* previous, bool isLeft) { //Print functions, prints
 }
 
 
+ 
