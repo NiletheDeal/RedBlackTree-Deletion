@@ -40,10 +40,20 @@ void showTrunks(Trunk* p) {
 //Prototypes
 void ADD(Node*& head, Node*& current, Node*& previous, int value);
 void PRINT(Node* root, Trunk* previous, bool isLeft);
+bool search(Node* tree, int s);
+void DELETE(Node* &head, Node* &x);
 
 void BALANCE(Node*& head, Node*& current);
 void rotateLeft(Node*& head, Node*& current);
 void rotateRight(Node*& head, Node*& current);
+
+Node* getSibling(Node* &x);
+Node* successor(Node* &x);
+Node* replaceNode(Node* &x);
+bool hasRedChild(Node* &x);
+void fixDoubleBlack(Node* &head, Node* &x);
+void swapNodeValues(Node* &u, Node* &x);
+
 
 int main(){
   cout << "Welcome to BST" << endl << endl;
@@ -343,6 +353,198 @@ void PRINT(Node* root, Trunk* previous, bool isLeft) { //Print functions, prints
     trunk->str = (char*)("   |");
     PRINT(root->getRight(), trunk, false);
 }
+void DELETE(Node* &head, Node* &x) {
+  Node* u = replaceNode(x);
+  Node* parent = x->getParent();
+  //Bool to track if both are black
+  bool bothBlack = ((u == NULL || u->getColor() == 0) && (x == NULL || x->getColor() == 0));
 
+  //If x has no children
+  if (u == NULL) {
+    if (x == head) {
+      head = NULL;
+    }
+    else {
+      if (bothBlack) {
+	fixDoubleBlack(head, x);
+      }
+      else {
+	//One is red -> make sibling red
+	if (getSibling(x) != NULL) {
+	  getSibling(x)->setColor(1);
+	}
+      }
+      //Delete x from tree
+      if (x == parent->getLeft()) {
+	parent->setLeft(NULL);
+      }
+      else {
+	parent->setRight(NULL);
+      }
+    }
+    x->~Node();
+    return;
+  }
 
+  //If x has 1 child
+  if (x->getRight() == NULL || x->getLeft() == NULL) {
+    if (x == head) {
+      //Value of u goes to x
+      x->setData(u->getData());
+      x->setLeft(NULL);
+      x->setRight(NULL);
+      //Delete u
+      u->~Node();
+    }
+    else {
+      //Detach x from tree and move u up
+      if (x == parent->getLeft()) {
+	parent->setLeft(u);
+      }
+      else {
+	parent->setRight(u);
+      }
+      //Delete x
+      x->~Node();
+      u->setParent(parent);
+      if (bothBlack) {
+	fixDoubleBlack(head, x);
+      }
+      else {
+	//If one is red, color u black
+	u->setColor(0);
+      }
+    }
+    return;
+  }
+
+  //if x has 2 children
+  swapNodeValues(u, x);
+  DELETE(head, u);
+}
+Node* getSibling(Node* &x) {
+  if (x->getParent() == NULL) {
+    return NULL;
+  }
+  if (x == x->getParent()->getLeft()) {
+    return x->getParent()->getRight();
+  }
+  else {
+    return x->getParent()->getLeft();
+  }
+}
+
+Node* successor(Node* &x) {
+  //Get the left most value of right subtree
+  Node* a = x;
+  while (a->getLeft() != NULL) {
+    a = a->getLeft();
+  }
+  return a;
+}
+
+Node* replaceNode(Node* &x) {
+  //If node has 2 children
+  if (x->getLeft() != NULL && x->getRight() != NULL) {
+    Node* right = x->getRight();
+    return successor(right);
+  }
+  //If node has no children
+  else if (x->getLeft() == NULL && x->getRight() == NULL) {
+    return NULL;
+  }
+  //If node has 1 child
+  else {
+    if (x->getLeft() != NULL) {
+      return x->getLeft();
+    }
+    else {
+      return x->getRight();
+    }
+  }
+}
+
+void swapNodeValues(Node* &u, Node* &x) {
+  //Swap the int values between the two given nodes
+  int temp;
+  temp = u->getData();
+  u->setData(x->getData());
+  x->setData(temp);
+}
+
+void fixDoubleBlack(Node* &head, Node* &x) {
+  if (x == head)
+    return;
+
+  Node* sibling = getSibling(x);
+  Node* parent = x->getParent();
+
+  if (sibling == NULL) {
+    //if no sibling, push doublebalck up
+    fixDoubleBlack(head, parent);
+  } else {
+    if (sibling->getColor() == 1) {
+      //silbing is red
+      parent->setColor(1); //red
+      sibling->setColor(0); //black
+      if (sibling == parent->getLeft()) {
+	rotateRight(head, parent);
+      } else {
+	rotateLeft(head, parent);
+      }
+      fixDoubleBlack(head, x);
+    } else {
+      //sibling is black
+      if (hasRedChild(sibling)) {
+	//has at least 1 red child
+	if (sibling->getLeft() != NULL && sibling->getLeft()->getColor() == 1) {
+	  //sibling's left child is red
+	  if (sibling == parent->getLeft()) {
+	    //left left
+	    sibling->getLeft()->setColor(sibling->getColor());
+	    sibling->setColor(parent->getColor());
+	    rotateRight(head, parent);
+	  } else {
+	    //right left
+	    sibling->getLeft()->setColor(parent->getColor());
+	    rotateRight(head, sibling);
+	    rotateLeft(head, parent);
+	  }
+	} else {
+	  //sibling's right child is red
+	  if (sibling == parent->getLeft()) {
+	    //left right
+	    sibling->getRight()->setColor(parent->getColor());
+	    rotateLeft(head, sibling);
+	    rotateRight(head, parent);
+	  } else {
+	    //right right
+	    sibling->getRight()->setColor(sibling->getColor());
+	    sibling->setColor(parent->getColor());
+	    rotateLeft(head, parent);
+	  }
+	}
+	parent->setColor(0); //black
+      } else {
+	//two black children
+	sibling->setColor(1); //red
+	if (parent->getColor() == 0) {
+	  fixDoubleBlack(head, parent); //recursion
+	} else {
+	  parent->setColor(0); //black
+	}
+      }
+    }
+  }
+}
+
+bool hasRedChild(Node* &x) {
+  if (x->getLeft() != NULL && x->getLeft()->getColor() == 1) {
+    return true;
+  } else if (x->getRight() != NULL && x->getRight()->getColor() == 1) {
+    return true;
+  } else {
+    return false;
+  }
+}
  
