@@ -64,7 +64,7 @@ int main(){
   int value = -1;
   Node* tree = nullptr;
   while(looping == true) {
-    cout <<"ADD, SEARCH, PRINT, or QUIT?" << endl;
+    cout <<"ADD, SEARCH, PRINT, REMOVE, or QUIT?" << endl;
     cin.get(command, 10);
     cin.clear();
     cin.ignore(10000, '\n');
@@ -132,20 +132,23 @@ int main(){
       cin.ignore(10000, '\n');
       bool checkValue = search(tree, deleteInteger);
       if(checkValue == 0) {
-	cout << "Value no found in tree, cannot delete." << endl << endl;
+	cout << "Value not found in tree, cannot delete." << endl << endl;
       }
       else {
 	Node* v = tree;
-	while(v->getData() != value) {//not the right node
-	  if(value < v->getData()) {//less than the current node
+	while(v->getData() != deleteInteger) {//not the right node
+	  if(deleteInteger < v->getData()) {//less than the current node
+	    cout << "Left" << endl;
 	    v = v->getLeft();
 	  }
-	  else  if (value > v->getData()) {//greater than the current node
+	  else  if (deleteInteger > v->getData()) {//greater than the current node
 	    v = v->getRight();
+	    cout << "Right" << endl;
 	  }
 	}
 	DELETE(tree, v);
 	cout << "Done deleteing" << endl;
+      }
     }
     else if(strcmp(command, "PRINT") == 0) {//PRINT out tree
       PRINT(tree, NULL, false);
@@ -420,6 +423,8 @@ void DELETE(Node* &head, Node* &x) {
 
   //if x has 2 children
   swapNodeValues(u, x);
+  cout << "u data is " << u->getData() << endl;
+  cout << "x data is " << x->getData() << endl;
   DELETE(head, u);
 }
 Node* getSibling(Node* &x) {
